@@ -18,11 +18,14 @@ type SearchCriteria struct {
     Limit int
 }
 
-var request = Request{config: LoadConfig()}
+var config, _ = LoadConfig()
 
-func GetArtifact(refName string, path string) (ShelfResponse, error){
+func GetArtifact(refName string, path string, shelfToken string) (ShelfResponse, error){
+    request := Request{config, shelfToken}
     res, err := request.Do("GET", refName, path, "artifact")
+    fmt.Println(err)
     fmt.Println(res)
+    return ShelfResponse{}, nil
 }
 
 func CreateArtifact(path string, file []byte) {
@@ -37,8 +40,8 @@ func GetMetadata(path string) {
 func GetMetadataProperty(key string, path string) {
 }
 
-func UpdateMetadata(path string, metadata map[string]interface{}) (map[string]interface{}, error) {
+func UpdateMetadata(path string, metadata map[string]interface{}) {
 }
 
-func UpdateMetadataProperty(key string, path string, metadata map[string]interface{}) (map[string]interface{}, error) {
+func UpdateMetadataProperty(key string, path string, metadata map[string]interface{}) {
 }

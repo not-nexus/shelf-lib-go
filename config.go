@@ -21,17 +21,13 @@ func LoadConfig() (Config, error){
     file, err := os.Open(path.Join(path.Dir(filename), "config.json"))
 
     if err != nil {
-        return nil, err
+        return Config{}, err
     }
 
-    decoder, err := json.NewDecoder(file)
-
-    if err != nil {
-        return nil, err
-    }
+    decoder := json.NewDecoder(file)
 
     config := Config{}
-    err := decoder.Decode(&config)
+    err = decoder.Decode(&config)
 
     return config, err
 }
