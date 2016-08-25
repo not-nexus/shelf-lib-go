@@ -5,9 +5,15 @@ import (
 	. "github.com/onsi/gomega"
 
 	"testing"
+    "github.com/jarcoal/httpmock"
 )
 
 func TestShelflib(t *testing.T) {
+    // Activate httpmock for mocking http layer
+    // Mock responses are setup in tests themselves.
+    httpmock.Activate()
+    defer httpmock.DeactivateAndReset()
+
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Shelflib Suite")
 }
