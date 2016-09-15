@@ -1,65 +1,75 @@
 package shelflib
 
 import (
-    "bytes"
+	"bytes"
+	"log"
 )
 
-// SearchCriteria is a wrapper for shelf search criteria
+// SearchCriteria is a wrapper for Shelf search criteria.
 type SearchCriteria struct {
-    Search []string
-    Sort []string
-    Limit int
+	Search []string
+	Sort   []string
+	Limit  int
 }
 
-var config, _ = LoadConfig()
-
-func GetArtifact(shelfToken string, refName string, path string) (*ShelfResponse, error){
-    var request = Request{config, shelfToken}
-
-    return request.Do("GET", refName, path, "artifact", "", nil)
+// MetadataProperty is a wrapper for Shelf metadata property.
+type MetadataProperty struct {
+	Name      string
+	Value     string
+	Immutable bool
 }
 
-func CreateArtifact(shelfToken string, refName string, path string, data []byte) (*ShelfResponse, error) {
-    request := Request{config, shelfToken}
-    return request.Do("POST", refName, path, "artifact", "", bytes.NewBuffer(data))
+type shelfLib struct {
+	Logger     log.Logger
+	ShelfToken string
 }
 
-func Search(shelfToken string, refName string, path string, searchCriteria map[string]interface{}) (*ShelfResponse, error) {
-    request := Request{config, shelfToken}
-    data, err := request.MarshalRequestData(searchCriteria)
-
-    if err != nil {
-        return &ShelfResponse{}, err
-    }
-
-    return request.Do("POST", refName, path, "search", "", data)
+func New(shelfToken string, logger log.Logger) *shelfLib {
+	return &shelfLib{logger, shelfToken}
 }
 
-func GetMetadata(shelfToken string, refName string, path string) (*ShelfResponse, error) {
-    request := Request{config, shelfToken}
-    return request.Do("GET", refName, path, "meta", "", nil)
+func (this *shelfLib) GetArtifact(path string) ([]byte, error) {
+	shelfResponse := DoRequest("GET", this.ShelfToken, path, "artifact", "", nil)
 }
 
-func GetMetadataProperty(shelfToken string, refName string, path string, property string) (*ShelfResponse, error) {
-    request := Request{config, shelfToken}
-    return request.Do("GET", refName, path, "meta", property, nil)
+func (this *shelfLib) ListArtifact(path string) ([]string, error) {
+	shelfResponse := DoRequest("HEAD", this.ShelfToken, path, "artifact", "", nil)
 }
 
-func UpdateMetadata(shelfToken string, refName string, path string, metadata map[string]interface{}) (*ShelfResponse, error) {
-    request := Request{config, shelfToken}
-    data, _ := request.MarshalRequestData(metadata)
-
-    return request.Do("PUT", refName, path, "meta", "", data)
+func (this *shelfLib) CreateArtifact(path string, data []byte) error {
+	shelfResponse := DoRequest("POST", this.ShelfToken, path, "artifact", "", bytes.NewBuffer(data))
 }
 
-func UpdateMetadataProperty(shelfToken string, refName string, path string, metadata map[string]interface{}, property string) (*ShelfResponse, error) {
-    request := Request{config, shelfToken}
-    data, _ := request.MarshalRequestData(metadata)
-    return request.Do("PUT", refName, path, "meta", property, data)
+func (this *shelfLib) Search(path string, searchCriteria *SearchCriteria) ([]string, error) {
+	data, err := MarshalRequestData(searchCriteria)
+
+	if err != nil {
+		return &ShelfResponse{}, err
+	}
+
+	shelfResponse := DoRequest("POST", this.ShelfToken, path, "search", "", data)
 }
 
-func CreateMetadataProperty(shelfToken string, refName string, path string, metadata map[string]interface{}, property string) (*ShelfResponse, error) {
-    request := Request{config, shelfToken}
-    data, _ := request.MarshalRequestData(metadata)
-    return request.Do("POST", refName, path, "meta", property, data)
+func (this *shelfLib) GetMetadata(path string) (map[string]MetadataProperty, error) {
+	shelfResponse := DoRequest("GET", this.ShelfToken, path, "meta", "", nil)
+}
+
+func (this *shelfLib) GetMetadataProperty(path string, property string) (*MetadataProperty, error) {
+	shelfResponse := DoRequest("GET", this.ShelfToken, path, "meta", property, nil)
+}
+
+func (this *shelfLib) UpdateMetadata(path string, metadata map[string]MetadataProperty) (map[string]MetadataProperty, error) {
+	data, _ := MarshalRequestData(metadata)
+
+	shelfResponse := DoRequest("PUT", this.ShelfToken, path, "meta", "", data)
+}
+
+func (this *shelfLib) UpdateMetadataProperty(path string, metadata MetadataProperty) (*MetadataProperty, error) {
+	data, _ := MarshalRequestData(metadata)
+	shelfResponse := oRequest("PUT", self.ShelfToken, path, "meta", metadata.Name, data)
+}
+
+func (this *shelfLib) CreateMetadataProperty(path string, metadata MetadataProperty) (*MetadataProperty, error) {
+	data, _ := MarshalRequestData(metadata)
+	shelfResponse := DoRequest("POST", self.ShelfToken, path, "meta", metadata.Name, data)
 }
