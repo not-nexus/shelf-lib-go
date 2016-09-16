@@ -11,13 +11,6 @@ import (
 
 var SuffixMap = map[string]string{"meta": "_meta", "search": "_search", "artifact": ""}
 
-// ShelfResponse is a wrapper for a response from shelf.
-type ShelfResponse struct {
-	Body       interface{}
-	Links      []string
-	StatusCode int
-}
-
 func MarshalRequestData(data interface{}) (io.Reader, error) {
 	jsonData, err := json.Marshal(data)
 
@@ -28,8 +21,8 @@ func MarshalRequestData(data interface{}) (io.Reader, error) {
 	return bytes.NewBuffer(jsonData), nil
 }
 
-func DoRequest(verb string, shelfToken string, path string, requestType string, property string, data io.Reader) (*ShelfResponse, error) {
-	response := &ShelfResponse{}
+func DoRequest(verb string, shelfToken string, path string, requestType string, property string, data io.Reader) (*http.Response, error) {
+	var response http.Response
 	requestURI, err := buildUrl(path, requestType, property)
 
 	if err != nil {
@@ -42,25 +35,10 @@ func DoRequest(verb string, shelfToken string, path string, requestType string, 
 		return response, err
 	}
 
-	req.Header.Add("Authorization", shelfReq.ShelfToken)
+	req.Header.Add("Authorization", shelfToken)
 	client := &http.Client{}
-	rawResponse, err := client.Do(req)
 
-	if err != nil {
-		return response, err
-	}
-
-	return parseRequest(rawResponse), nil
-}
-
-func parseRequest(response *http.Response) *ShelfResponse {
-	shelfResponse := &ShelfResponse{
-		StatusCode: response.StatusCode,
-		Links:      response.Header["Link"],
-		Body:       response.Body,
-	}
-
-	return shelfResponse
+	return client.Do(req)
 }
 
 func buildUrl(uri string, requestType string, property string) (string, error) {
