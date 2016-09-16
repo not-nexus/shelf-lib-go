@@ -10,4 +10,7 @@ go:
 install:
     - go get
     - go get github.com/jarcoal/httpmock
+    - go get github.com/onsi/ginkgo
+    - go get github.com/onsi/gomega
+
 script: go test ./...
