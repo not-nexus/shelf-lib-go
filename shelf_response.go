@@ -28,7 +28,7 @@ func ParseJsonResponse(response *http.Response, result interface{}) error {
 		return err
 	}
 
-	loadJsonBody(response.Body, result)
+	loadJsonBody(response.Body, &result)
 
 	return nil
 }
@@ -53,32 +53,28 @@ func CheckResponseStatus(response *http.Response) error {
 	var (
 		code       string
 		message    string
-		parsedBody map[string]string
+		parsedBody interface{}
 	)
-	err := loadJsonBody(response.Body, parsedBody)
 
-	if err != nil {
-		message = ""
-		code = ""
-	} else {
-		message = parsedBody["code"]
-		code = parsedBody["message"]
-	}
-
-	err = NewShelfError(message, code)
-
-	return err
-}
-
-// Unamarshals JSON data from a response body.
-func loadJsonBody(rawBody io.ReadCloser, result interface{}) error {
-	body, err := ioutil.ReadAll(rawBody)
+	err := loadJsonBody(response.Body, &parsedBody)
 
 	if err != nil {
 		return err
+	} else {
+		body := parsedBody.(map[string]interface{})
+		message = body["message"].(string)
+		code = body["code"].(string)
 	}
 
-	err = json.Unmarshal(body, &result)
+	shelfErr := NewShelfError(message, code)
+
+	return shelfErr
+}
+
+// Unamarshals JSON data from a response body.
+func loadJsonBody(rawBody io.ReadCloser, result *interface{}) error {
+	decoder := json.NewDecoder(rawBody)
+	err := decoder.Decode(result)
 
 	return err
 }

@@ -14,7 +14,7 @@ var validToken = "VALIDTOKEN"
 var host = "https://api.shelf.cwscloud.net/"
 var logOutput io.Writer
 var logger = log.New(logOutput, "", 0)
-var shelfLib = shelflib.New(validToken, *logger)
+var shelf = shelflib.New(validToken, *logger)
 
 var _ = Describe("Shelflib", func() {
 	BeforeEach(func() {
@@ -43,19 +43,18 @@ var _ = Describe("Shelflib", func() {
 		Context("GetArtifact", func() {
 			It("should successfully retrieve artifact", func() {
 				uri := host + "test/artifact/thing"
-				res, err := shelfLib.GetArtifact(uri)
+				res, err := shelf.GetArtifact(uri)
 				Expect(err).ShouldNot(HaveOccurred())
 				Expect(res).To(Equal([]byte("Simple Text File")))
 			})
 
 			It("should fail with invalid token", func() {
 				uri := host + "test/artifact/thing"
-				shelfLib.Request.ShelfToken = "Whatever"
-				res, err := shelfLib.GetArtifact(uri)
+				shelf.Request.ShelfToken = "INVALID"
+				_, err := shelf.GetArtifact(uri)
 				shelfErr := err.(*shelflib.ShelfError)
 				Expect(shelfErr.Message).To(Equal("Permission denied"))
 				Expect(shelfErr.Code).To(Equal("permission_denied"))
-				Expect(res).To(Equal(nil))
 			})
 		})
 
@@ -63,7 +62,7 @@ var _ = Describe("Shelflib", func() {
 			It("should successfully create artifact", func() {
 				uri := host + "test/artifact/thing"
 				fileContents := []byte("Simple Text File")
-				err := shelfLib.CreateArtifact(uri, fileContents)
+				err := shelf.CreateArtifact(uri, fileContents)
 				Expect(err).ShouldNot(HaveOccurred())
 			})
 		})
