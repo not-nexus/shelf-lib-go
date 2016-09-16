@@ -12,14 +12,12 @@ import (
 
 var validToken = "VALIDTOKEN"
 var host = "https://api.shelf.cwscloud.net/"
-var shelfLib shelflib.ShelfLib
+var logOutput io.Writer
+var logger = log.New(logOutput, "", 0)
+var shelfLib = shelflib.New(validToken, *logger)
 
 var _ = Describe("Shelflib", func() {
 	BeforeEach(func() {
-		var logOutput io.Writer
-		logger := log.New(logOutput, "", 0)
-		shelfLib := shelflib.New(validToken, logger)
-
 		// Get artifact mocked route
 		//response := httpmock.NewBytesResponder(200, []byte("simple text"))
 		httpmock.RegisterResponder("GET", host+"test/artifact/thing", func(request *http.Request) (*http.Response, error) {
@@ -54,9 +52,9 @@ var _ = Describe("Shelflib", func() {
 				uri := host + "test/artifact/thing"
 				shelfLib.Request.ShelfToken = "Whatever"
 				res, err := shelfLib.GetArtifact(uri)
-				err = err.(shelfLib.ShelfError)
-				Expect(err.Message).To(Equal("Permission denied"))
-				Expect(err.Code).To(Equal("permission_denied"))
+				shelfErr := err.(*shelflib.ShelfError)
+				Expect(shelfErr.Message).To(Equal("Permission denied"))
+				Expect(shelfErr.Code).To(Equal("permission_denied"))
 				Expect(res).To(Equal(nil))
 			})
 		})

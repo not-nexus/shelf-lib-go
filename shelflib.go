@@ -14,9 +14,9 @@ type SearchCriteria struct {
 
 // Wrapper for Shelf metadata property.
 type MetadataProperty struct {
-	Name      string
-	Value     string
-	Immutable bool
+	name      string
+	value     string
+	immutable bool
 }
 
 // Interface for interacting with Shelf.
@@ -143,7 +143,7 @@ func (this *ShelfLib) UpdateMetadataProperty(path string, metadata *MetadataProp
 		return responseMeta, err
 	}
 
-	response, err := this.Request.DoRequest("PUT", path, "meta", metadata.Name, data)
+	response, err := this.Request.DoRequest("PUT", path, "meta", metadata.name, data)
 
 	if err != nil {
 		return responseMeta, err
@@ -163,7 +163,7 @@ func (this *ShelfLib) CreateMetadataProperty(path string, metadata MetadataPrope
 		return responseMeta, err
 	}
 
-	response, err := this.Request.DoRequest("POST", path, "meta", metadata.Name, data)
+	response, err := this.Request.DoRequest("POST", path, "meta", metadata.name, data)
 
 	if err != nil {
 		return responseMeta, err
