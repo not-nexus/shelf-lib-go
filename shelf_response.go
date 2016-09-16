@@ -6,16 +6,18 @@ import (
 	"net/http"
 )
 
-func ParseShelfResponse(response *http.Response, data interface{}) (interface{}, error) {
+// Parses a response from Shelf.
+func ParseShelfResponse(response *http.Response) (io.ReadCloser, error) {
+	var err error
+
 	if response.StatusCode > 399 {
 		err := checkStatus(response.Body)
-	} else {
-
 	}
 
 	return data, err
 }
 
+// Creates an error from a Shelf error response.
 func checkStatus(body io.ReadCloser) error {
 	var (
 		message string
@@ -36,6 +38,7 @@ func checkStatus(body io.ReadCloser) error {
 	return err
 }
 
+// Unamarshals JSON data from a response body.
 func loadJsonBody(rawBody io.ReadCloser) (interface{}, error) {
 	body, err := ioutil.ReadAll(body)
 

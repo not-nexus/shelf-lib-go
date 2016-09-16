@@ -9,9 +9,15 @@ import (
 	"path"
 )
 
+type Request struct {
+	Logger     log.Logger
+	ShelfToken string
+}
+
 var SuffixMap = map[string]string{"meta": "_meta", "search": "_search", "artifact": ""}
 
-func MarshalRequestData(data interface{}) (io.Reader, error) {
+// Marshals given data to JSON and creates a buffer from it.
+func (this *Request) MarshalRequestData(data interface{}) (io.Reader, error) {
 	jsonData, err := json.Marshal(data)
 
 	if err != nil {
@@ -21,9 +27,10 @@ func MarshalRequestData(data interface{}) (io.Reader, error) {
 	return bytes.NewBuffer(jsonData), nil
 }
 
-func DoRequest(verb string, shelfToken string, path string, requestType string, property string, data io.Reader) (*http.Response, error) {
+// Performs request on Shelf.
+func (this *Request) DoRequest(verb string, path string, requestType string, property string, data io.Reader) (*http.Response, error) {
 	var response http.Response
-	requestURI, err := buildUrl(path, requestType, property)
+	requestURI, err := this.buildUrl(path, requestType, property)
 
 	if err != nil {
 		return response, err
@@ -35,13 +42,14 @@ func DoRequest(verb string, shelfToken string, path string, requestType string, 
 		return response, err
 	}
 
-	req.Header.Add("Authorization", shelfToken)
+	req.Header.Add("Authorization", this.ShelfToken)
 	client := &http.Client{}
 
 	return client.Do(req)
 }
 
-func buildUrl(uri string, requestType string, property string) (string, error) {
+// Builds Shelf URL.
+func (this *Request) buildUrl(uri string, requestType string, property string) (string, error) {
 	parsedUri, err := url.Parse(uri)
 
 	if err != nil {
