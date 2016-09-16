@@ -1,10 +1,14 @@
 package shelflib
 
 type ShelfError struct {
-	code    string
-	message string
+	Code    string
+	Message string
 }
 
 func NewShelfError(message string, code string) *ShelfError {
-	return &ShelfError{code, message}
+	return &ShelfError{Code: code, Message: message}
+}
+
+func (this *ShelfError) Error() string {
+	return this.Message
 }

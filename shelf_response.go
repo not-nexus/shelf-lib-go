@@ -2,35 +2,67 @@ package shelflib
 
 import (
 	"encoding/json"
+	"io"
 	"io/ioutil"
 	"net/http"
 )
 
-// Parses a response from Shelf.
-func ParseShelfResponse(response *http.Response) (io.ReadCloser, error) {
-	var err error
+// Takes a response from Shelf and parses the links.
+func ParseLinks(response *http.Response) ([]string, error) {
+	var links []string
 
-	if response.StatusCode > 399 {
-		err := checkStatus(response.Body)
+	err := CheckResponseStatus(response)
+
+	if err != nil {
+		return links, err
 	}
 
-	return data, err
+	return response.Header["Links"], nil
 }
 
-// Creates an error from a Shelf error response.
-func checkStatus(body io.ReadCloser) error {
+// Parses a response with an expected JSON body.
+func ParseJsonResponse(response *http.Response, result interface{}) error {
+	err := CheckResponseStatus(response)
+
+	if err != nil {
+		return err
+	}
+
+	loadJsonBody(response.Body, result)
+
+	return nil
+}
+
+func ParseStreamResponse(response *http.Response) ([]byte, error) {
+	err := CheckResponseStatus(response)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return ioutil.ReadAll(response.Body)
+}
+
+// Checks given response to see if it is an error response.
+// If it is it create a ShelfError.
+func CheckResponseStatus(response *http.Response) error {
+	if response.StatusCode < 399 {
+		return nil
+	}
+
 	var (
-		message string
-		code    string
+		code       string
+		message    string
+		parsedBody map[string]string
 	)
-	body, err := loadJsonBody(body)
+	err := loadJsonBody(response.Body, parsedBody)
 
 	if err != nil {
 		message = ""
 		code = ""
 	} else {
-		message = body.code
-		code = body.message
+		message = parsedBody["code"]
+		code = parsedBody["message"]
 	}
 
 	err = NewShelfError(message, code)
@@ -39,15 +71,14 @@ func checkStatus(body io.ReadCloser) error {
 }
 
 // Unamarshals JSON data from a response body.
-func loadJsonBody(rawBody io.ReadCloser) (interface{}, error) {
-	body, err := ioutil.ReadAll(body)
+func loadJsonBody(rawBody io.ReadCloser, result interface{}) error {
+	body, err := ioutil.ReadAll(rawBody)
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	var resp interface{}
-	err = json.Unmarshal(body, &resp)
+	err = json.Unmarshal(body, &result)
 
-	return resp, err
+	return err
 }

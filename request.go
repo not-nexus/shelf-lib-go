@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"path"
@@ -29,17 +30,16 @@ func (this *Request) MarshalRequestData(data interface{}) (io.Reader, error) {
 
 // Performs request on Shelf.
 func (this *Request) DoRequest(verb string, path string, requestType string, property string, data io.Reader) (*http.Response, error) {
-	var response http.Response
 	requestURI, err := this.buildUrl(path, requestType, property)
 
 	if err != nil {
-		return response, err
+		return nil, err
 	}
 
 	req, err := http.NewRequest(verb, requestURI, data)
 
 	if err != nil {
-		return response, err
+		return nil, err
 	}
 
 	req.Header.Add("Authorization", this.ShelfToken)

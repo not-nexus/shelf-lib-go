@@ -5,16 +5,18 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/quantumew/shelflib"
+	"io"
+	"log"
 	"net/http"
-	"os"
 )
 
 var validToken = "VALIDTOKEN"
 var host = "https://api.shelf.cwscloud.net/"
+var shelfLib shelflib.ShelfLib
 
 var _ = Describe("Shelflib", func() {
 	BeforeEach(func() {
-		var logOutput []byte
+		var logOutput io.Writer
 		logger := log.New(logOutput, "", 0)
 		shelfLib := shelflib.New(validToken, logger)
 
@@ -50,8 +52,9 @@ var _ = Describe("Shelflib", func() {
 
 			It("should fail with invalid token", func() {
 				uri := host + "test/artifact/thing"
-				shelfLib.ShelfToken = "Whatever"
+				shelfLib.Request.ShelfToken = "Whatever"
 				res, err := shelfLib.GetArtifact(uri)
+				err = err.(shelfLib.ShelfError)
 				Expect(err.Message).To(Equal("Permission denied"))
 				Expect(err.Code).To(Equal("permission_denied"))
 				Expect(res).To(Equal(nil))
@@ -62,28 +65,18 @@ var _ = Describe("Shelflib", func() {
 			It("should successfully create artifact", func() {
 				uri := host + "test/artifact/thing"
 				fileContents := []byte("Simple Text File")
-				res, err := shelfLib.CreateArtifact(uri, fileContents)
+				err := shelfLib.CreateArtifact(uri, fileContents)
 				Expect(err).ShouldNot(HaveOccurred())
 			})
 		})
 
 		Context("UpdateMetadata", func() {
 			It("should successfully update artifact's metadata", func() {
-				uri := host + "test/artifact/thing"
-				data := map[string]map[string]interface{}{"tag": map[string]interface{}{"value": "val", "immutable": false}}
-				res, err := shelflib.UpdateMetadata(uri, data)
-				Expect(err).ShouldNot(HaveOccurred())
-				Expect(res).To(Equal(data))
 			})
 		})
 
 		Context("UpdateMetadataProperty", func() {
 			It("should successfully update artifact's metadata property", func() {
-				uri := host + "test/artifact/thing"
-				data := map[string]interface{}{"value": "val", "immutable": false}
-				res, err := shelflib.UpdateMetadata(uri, data)
-				Expect(err).ShouldNot(HaveOccurred())
-				Expect(res).To(Equal(data))
 			})
 		})
 
