@@ -53,7 +53,7 @@ var _ = Describe("Shelflib", func() {
 
 		httpmock.RegisterResponder("HEAD", uriMap["artifact"], func(request *http.Request) (*http.Response, error) {
 			response := httpmock.NewStringResponse(204, "")
-			response.Header["Links"] = []string{testLink, metadataLink}
+			response.Header["Link"] = []string{testLink, metadataLink}
 
 			return response, nil
 		})
