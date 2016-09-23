@@ -14,9 +14,9 @@ type SearchCriteria struct {
 
 // Wrapper for Shelf metadata property.
 type MetadataProperty struct {
-	name      string
-	value     string
-	immutable bool
+	Name      string
+	Value     string
+	Immutable bool
 }
 
 // Interface for interacting with Shelf.
@@ -91,12 +91,10 @@ func (this *ShelfLib) GetMetadata(path string) (map[string]*MetadataProperty, er
 	response, err := this.Request.DoRequest("GET", path, "meta", "", nil)
 
 	if err != nil {
-		return responseMeta, nil
+		return responseMeta, err
 	}
 
-	err = ParseJsonResponse(response, responseMeta)
-
-	return responseMeta, err
+	return ParseBulkMetadataResponse(response)
 }
 
 // Retrieve metadata property for an artifact.
@@ -108,9 +106,7 @@ func (this *ShelfLib) GetMetadataProperty(path string, propertyKey string) (*Met
 		return responseMeta, err
 	}
 
-	err = ParseJsonResponse(response, responseMeta)
-
-	return responseMeta, err
+	return ParseMetadataResponse(response)
 }
 
 // Bulk update of an artifacts metadata.
@@ -128,30 +124,25 @@ func (this *ShelfLib) UpdateMetadata(path string, metadata map[string]*MetadataP
 		return responseMeta, err
 	}
 
-	err = ParseJsonResponse(response, responseMeta)
-
-	return responseMeta, err
+	return ParseBulkMetadataResponse(response)
 }
 
 // Update metadata property for an artifact.
 func (this *ShelfLib) UpdateMetadataProperty(path string, metadata *MetadataProperty) (*MetadataProperty, error) {
 	var responseMeta *MetadataProperty
-
 	data, err := this.Request.MarshalRequestData(metadata)
 
 	if err != nil {
 		return responseMeta, err
 	}
 
-	response, err := this.Request.DoRequest("PUT", path, "meta", metadata.name, data)
+	response, err := this.Request.DoRequest("PUT", path, "meta", metadata.Name, data)
 
 	if err != nil {
 		return responseMeta, err
 	}
 
-	err = ParseJsonResponse(response, responseMeta)
-
-	return responseMeta, err
+	return ParseMetadataResponse(response)
 }
 
 // Create metadata property. Will not update existing.
@@ -163,13 +154,11 @@ func (this *ShelfLib) CreateMetadataProperty(path string, metadata MetadataPrope
 		return responseMeta, err
 	}
 
-	response, err := this.Request.DoRequest("POST", path, "meta", metadata.name, data)
+	response, err := this.Request.DoRequest("POST", path, "meta", metadata.Name, data)
 
 	if err != nil {
 		return responseMeta, err
 	}
 
-	err = ParseJsonResponse(response, responseMeta)
-
-	return responseMeta, err
+	return ParseMetadataResponse(response)
 }

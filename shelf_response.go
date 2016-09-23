@@ -2,6 +2,7 @@ package shelflib
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -21,16 +22,72 @@ func ParseLinks(response *http.Response) ([]string, error) {
 }
 
 // Parses a response with an expected JSON body.
-func ParseJsonResponse(response *http.Response, result interface{}) error {
+func ParseJsonResponse(response *http.Response, result *interface{}) error {
 	err := CheckResponseStatus(response)
 
 	if err != nil {
 		return err
 	}
 
-	loadJsonBody(response.Body, &result)
+	loadJsonBody(response.Body, result)
 
 	return nil
+}
+
+func ParseMetadataResponse(response *http.Response) (*MetadataProperty, error) {
+	var (
+		jsonResponse interface{}
+		result       *MetadataProperty
+	)
+	err := ParseJsonResponse(response, &jsonResponse)
+
+	if err != nil {
+		return result, err
+	}
+
+	prop := jsonResponse.(map[string]interface{})
+	name := prop["name"].(string)
+	value := prop["value"].(string)
+	immutable := prop["immutable"].(bool)
+	result = MapMetadataProperty(name, value, immutable)
+
+	return result, nil
+}
+
+func ParseBulkMetadataResponse(response *http.Response) (map[string]*MetadataProperty, error) {
+	var (
+		jsonResponse interface{}
+		result       map[string]*MetadataProperty
+	)
+
+	err := ParseJsonResponse(response, &jsonResponse)
+
+	if err != nil {
+		return result, err
+	}
+
+	propMap := jsonResponse.(map[string]interface{})
+	result = make(map[string]*MetadataProperty)
+
+	for key, val := range propMap {
+		prop := val.(map[string]interface{})
+		value := prop["value"].(string)
+		immutable := prop["immutable"].(bool)
+		result[key] = MapMetadataProperty(key, value, immutable)
+	}
+
+	return result, nil
+}
+
+func MapMetadataProperty(name string, value string, immutable bool) *MetadataProperty {
+	mappedMetadata := &MetadataProperty{
+		Name:      name,
+		Value:     value,
+		Immutable: immutable,
+	}
+
+	fmt.Println(mappedMetadata)
+	return mappedMetadata
 }
 
 func ParseStreamResponse(response *http.Response) ([]byte, error) {
