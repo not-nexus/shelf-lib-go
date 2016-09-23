@@ -5,6 +5,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/quantumew/shelflib"
+	"github.com/tomnomnom/linkheader"
 	"io"
 	"io/ioutil"
 	"log"
@@ -16,9 +17,11 @@ var validToken = "VALIDTOKEN"
 var host = "https://api.shelf.cwscloud.net/"
 var logOutput io.Writer
 var logger = log.New(logOutput, "", 0)
-var shelf = shelflib.New(validToken, *logger)
+var shelf = shelflib.New(validToken, logger)
 var testBucket = "test"
 var testPath = "test-artifact"
+var testLink = `</test/artifact/thing>; rel="self"; title="artifact"`
+var metadataLink = `</test/artifact/thing/_meta>; rel="related"; title="metadata"`
 
 func buildUri(refName string, artifactPath string, requestType string, property string) string {
 	suffix := shelflib.SuffixMap[requestType]
@@ -36,16 +39,23 @@ var uriMap = map[string]string{
 
 var _ = Describe("Shelflib", func() {
 	BeforeEach(func() {
+		permissionsError := map[string]string{"message": "Permission denied", "code": "permission_denied"}
 		// Get artifact mocked route
-		//response := httpmock.NewBytesResponder(200, []byte("simple text"))
 		httpmock.RegisterResponder("GET", uriMap["artifact"], func(request *http.Request) (*http.Response, error) {
 			token := request.Header["Authorization"][0]
 
 			if token == validToken {
 				return httpmock.NewStringResponse(200, "Simple Text File"), nil
 			} else {
-				return httpmock.NewStringResponse(403, `{"message": "Permission denied", "code": "permission_denied"}`), nil
+				return httpmock.NewJsonResponse(403, permissionsError)
 			}
+		})
+
+		httpmock.RegisterResponder("HEAD", uriMap["artifact"], func(request *http.Request) (*http.Response, error) {
+			response := httpmock.NewStringResponse(204, "")
+			response.Header["Links"] = []string{testLink, metadataLink}
+
+			return response, nil
 		})
 
 		httpmock.RegisterResponder("POST", uriMap["artifact"], func(request *http.Request) (*http.Response, error) {
@@ -53,10 +63,11 @@ var _ = Describe("Shelflib", func() {
 		})
 
 		httpmock.RegisterResponder("PUT", uriMap["meta"], func(request *http.Request) (*http.Response, error) {
-			return httpmock.NewStringResponse(
-					201,
-					`{"version": {"value": "1.5", "immutable": false}, "build": {"value": "10", "immutable": false}}}`),
-				nil
+			metadata := map[string]map[string]interface{}{
+				"version": map[string]interface{}{"value": "1.5", "immutable": false},
+				"build":   map[string]interface{}{"value": "10", "immutable": false},
+			}
+			return httpmock.NewJsonResponse(201, metadata)
 		})
 	})
 
@@ -94,6 +105,15 @@ var _ = Describe("Shelflib", func() {
 				res, err := shelf.UpdateMetadata(uriMap["artifact"], metadata)
 				Expect(err).ShouldNot(HaveOccurred())
 				Expect(res).To(Equal(metadata))
+			})
+		})
+
+		Context("ListArtifact", func() {
+			It("Should successfuly retrieve artifact link.", func() {
+				expectedLinks := linkheader.Parse(testLink)
+				links, err := shelf.ListArtifact(uriMap["artifact"])
+				Expect(err).ShouldNot(HaveOccurred())
+				Expect(links).To(Equal(expectedLinks))
 			})
 		})
 

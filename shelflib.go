@@ -2,6 +2,7 @@ package shelflib
 
 import (
 	"bytes"
+	"github.com/tomnomnom/linkheader"
 	"io"
 	"log"
 )
@@ -22,12 +23,12 @@ type MetadataProperty struct {
 
 // Interface for interacting with Shelf.
 type ShelfLib struct {
-	Logger  log.Logger
+	Logger  *log.Logger
 	Request *Request
 }
 
 // Create a ShelfLib instance.
-func New(shelfToken string, logger log.Logger) *ShelfLib {
+func New(shelfToken string, logger *log.Logger) *ShelfLib {
 	request := &Request{Logger: logger, ShelfToken: shelfToken}
 
 	return &ShelfLib{Logger: logger, Request: request}
@@ -53,15 +54,32 @@ func (this *ShelfLib) GetArtifact(path string) (io.ReadCloser, error) {
 }
 
 // Perform a HEAD request on an artifact endpoint.
-func (this *ShelfLib) ListArtifact(path string) ([]string, error) {
-	var links []string
+// It explicitly REMOVES metadata links.
+func (this *ShelfLib) ListArtifact(path string) (linkheader.Links, error) {
+	var links linkheader.Links
 	response, err := this.Request.DoRequest("HEAD", path, "artifact", "", nil)
 
 	if err != nil {
 		return links, err
 	}
 
-	return ParseLinks(response)
+	links, err = ParseLinks(response)
+
+	if err != nil {
+		return links, err
+	}
+
+	for i, link := range links {
+		if title, ok := link.Params["title"]; ok {
+			if title == "metadata" {
+				copy(links[i:], links[i+1:])
+				links[len(links)-1] = linkheader.Link{}
+				links = links[:len(links)-1]
+			}
+		}
+	}
+
+	return links, nil
 }
 
 // Upload an artifact from Shelf.
@@ -76,8 +94,8 @@ func (this *ShelfLib) CreateArtifact(path string, data []byte) error {
 }
 
 // Search Shelf using SearchCriteria wrapper struct.
-func (this *ShelfLib) Search(path string, searchCriteria *SearchCriteria) ([]string, error) {
-	var links []string
+func (this *ShelfLib) Search(path string, searchCriteria *SearchCriteria) (linkheader.Links, error) {
+	var links linkheader.Links
 	data, err := this.Request.MarshalRequestData(searchCriteria)
 
 	if err != nil {

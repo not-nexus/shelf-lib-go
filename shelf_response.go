@@ -2,14 +2,14 @@ package shelflib
 
 import (
 	"encoding/json"
-	"fmt"
+	"github.com/tomnomnom/linkheader"
 	"io"
 	"net/http"
 )
 
 // Takes a response from Shelf and parses the links.
-func ParseLinks(response *http.Response) ([]string, error) {
-	var links []string
+func ParseLinks(response *http.Response) (linkheader.Links, error) {
+	var links linkheader.Links
 
 	err := CheckResponseStatus(response)
 
@@ -17,7 +17,9 @@ func ParseLinks(response *http.Response) ([]string, error) {
 		return links, err
 	}
 
-	return response.Header["Links"], nil
+	links = linkheader.ParseMultiple(response.Header["Links"])
+
+	return links, nil
 }
 
 // Parses a response with an expected JSON body.
@@ -88,7 +90,6 @@ func CreateMetadataProperty(name string, value string, immutable bool) *Metadata
 		Immutable: immutable,
 	}
 
-	fmt.Println(mappedMetadata)
 	return mappedMetadata
 }
 

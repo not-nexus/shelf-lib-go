@@ -11,7 +11,7 @@ import (
 )
 
 type Request struct {
-	Logger     log.Logger
+	Logger     *log.Logger
 	ShelfToken string
 }
 
