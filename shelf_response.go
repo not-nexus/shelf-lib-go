@@ -17,7 +17,7 @@ func ParseLinks(response *http.Response) (linkheader.Links, error) {
 		return links, err
 	}
 
-	links = linkheader.ParseMultiple(response.Header["Links"])
+	links = linkheader.ParseMultiple(response.Header["Link"])
 
 	return links, nil
 }
