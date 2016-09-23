@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 )
 
@@ -34,6 +33,7 @@ func ParseJsonResponse(response *http.Response, result *interface{}) error {
 	return nil
 }
 
+// Parses metadata property response.
 func ParseMetadataResponse(response *http.Response) (*MetadataProperty, error) {
 	var (
 		jsonResponse interface{}
@@ -49,11 +49,12 @@ func ParseMetadataResponse(response *http.Response) (*MetadataProperty, error) {
 	name := prop["name"].(string)
 	value := prop["value"].(string)
 	immutable := prop["immutable"].(bool)
-	result = MapMetadataProperty(name, value, immutable)
+	result = CreateMetadataProperty(name, value, immutable)
 
 	return result, nil
 }
 
+// Parses bulk metadata response.
 func ParseBulkMetadataResponse(response *http.Response) (map[string]*MetadataProperty, error) {
 	var (
 		jsonResponse interface{}
@@ -73,13 +74,14 @@ func ParseBulkMetadataResponse(response *http.Response) (map[string]*MetadataPro
 		prop := val.(map[string]interface{})
 		value := prop["value"].(string)
 		immutable := prop["immutable"].(bool)
-		result[key] = MapMetadataProperty(key, value, immutable)
+		result[key] = CreateMetadataProperty(key, value, immutable)
 	}
 
 	return result, nil
 }
 
-func MapMetadataProperty(name string, value string, immutable bool) *MetadataProperty {
+// Creates a new MetadataProperty.
+func CreateMetadataProperty(name string, value string, immutable bool) *MetadataProperty {
 	mappedMetadata := &MetadataProperty{
 		Name:      name,
 		Value:     value,
@@ -88,16 +90,6 @@ func MapMetadataProperty(name string, value string, immutable bool) *MetadataPro
 
 	fmt.Println(mappedMetadata)
 	return mappedMetadata
-}
-
-func ParseStreamResponse(response *http.Response) ([]byte, error) {
-	err := CheckResponseStatus(response)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return ioutil.ReadAll(response.Body)
 }
 
 // Checks given response to see if it is an error response.

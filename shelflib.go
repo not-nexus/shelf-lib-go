@@ -2,6 +2,7 @@ package shelflib
 
 import (
 	"bytes"
+	"io"
 	"log"
 )
 
@@ -33,15 +34,22 @@ func New(shelfToken string, logger log.Logger) *ShelfLib {
 }
 
 // Download artifact from Shelf.
-func (this *ShelfLib) GetArtifact(path string) ([]byte, error) {
-	var artifact []byte
+func (this *ShelfLib) GetArtifact(path string) (io.ReadCloser, error) {
 	response, err := this.Request.DoRequest("GET", path, "artifact", "", nil)
 
 	if err != nil {
-		return artifact, err
+		return nil, err
 	}
 
-	return ParseStreamResponse(response)
+	// Ensures an error response was not returned
+	// then it returns the raw body.
+	err = CheckResponseStatus(response)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return response.Body, nil
 }
 
 // Perform a HEAD request on an artifact endpoint.

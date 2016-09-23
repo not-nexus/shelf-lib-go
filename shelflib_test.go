@@ -6,6 +6,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/quantumew/shelflib"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"path"
@@ -64,7 +65,8 @@ var _ = Describe("Shelflib", func() {
 			It("should successfully retrieve artifact", func() {
 				res, err := shelf.GetArtifact(uriMap["artifact"])
 				Expect(err).ShouldNot(HaveOccurred())
-				Expect(res).To(Equal([]byte("Simple Text File")))
+				respContents, _ := ioutil.ReadAll(res)
+				Expect(respContents).To(Equal([]byte("Simple Text File")))
 			})
 
 			It("should fail with invalid token", func() {
