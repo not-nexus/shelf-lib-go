@@ -1,7 +1,7 @@
 Shelf Lib
 =========
 
-[![Build Status](https://travis-ci.org/not-nexus/shelflib.svg?branch=master)](https://travis-ci.org/not-nexus/shelflib)
+[![Build Status](https://travis-ci.org/not-nexus/shelf-lib-go.svg?branch=master)](https://travis-ci.org/not-nexus/shelf-lib-go)
 
 Library for interfacing with [shelf](https://github.com/not-nexus/shelf).
 There is an associated CLI for this library here [not-nexus/shelfcli](https://github.com/not-nexus/shelfcli).
