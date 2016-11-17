@@ -1,10 +1,10 @@
 Shelf Lib
 =========
 
-[![Build Status](https://travis-ci.org/quantumew/shelflib.svg?branch=master)](https://travis-ci.org/quantumew/shelflib)
+[![Build Status](https://travis-ci.org/not-nexus/shelflib.svg?branch=master)](https://travis-ci.org/not-nexus/shelflib)
 
-Library for interfacing with [kyle-long/pyshelf](https://github.com/kyle-long/pyshelf).
-There is an associated CLI for this library here [kyle-long/shelfcli](https://github.com/kyle-long/shelfcli).
+Library for interfacing with [shelf](https://github.com/not-nexus/shelf).
+There is an associated CLI for this library here [not-nexus/shelfcli](https://github.com/not-nexus/shelfcli).
 
 Why did we pick GO?
 -------------------
