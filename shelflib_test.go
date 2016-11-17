@@ -22,6 +22,10 @@ var testBucket = "test"
 var testPath = "test-artifact"
 var testLink = `</test/artifact/thing>; rel="self"; title="artifact"`
 var metadataLink = `</test/artifact/thing/_meta>; rel="related"; title="metadata"`
+var testMetadata = map[string]map[string]interface{}{
+    "version": map[string]interface{}{"value": "1.5", "immutable": false},
+    "build":   map[string]interface{}{"value": "10", "immutable": false},
+}
 
 func buildUri(refName string, artifactPath string, requestType string, property string) string {
 	suffix := shelflib.SuffixMap[requestType]
@@ -51,6 +55,7 @@ var _ = Describe("Shelflib", func() {
 			}
 		})
 
+        // Head request for artifact links.
 		httpmock.RegisterResponder("HEAD", uriMap["artifact"], func(request *http.Request) (*http.Response, error) {
 			response := httpmock.NewStringResponse(204, "")
 			response.Header["Link"] = []string{testLink, metadataLink}
@@ -58,17 +63,22 @@ var _ = Describe("Shelflib", func() {
 			return response, nil
 		})
 
+        // Upload artifact.
 		httpmock.RegisterResponder("POST", uriMap["artifact"], func(request *http.Request) (*http.Response, error) {
 			return httpmock.NewStringResponse(201, ""), nil
 		})
 
+        // Bulk update of metadata.
 		httpmock.RegisterResponder("PUT", uriMap["meta"], func(request *http.Request) (*http.Response, error) {
-			metadata := map[string]map[string]interface{}{
-				"version": map[string]interface{}{"value": "1.5", "immutable": false},
-				"build":   map[string]interface{}{"value": "10", "immutable": false},
-			}
-			return httpmock.NewJsonResponse(201, metadata)
+			return httpmock.NewJsonResponse(201, testMetadata)
 		})
+
+        // Update metadata property.
+        httpmock.RegisterResponder("PUT", uriMap["meta"] + "/version", func(request *http.Request) (*http.Response, error) {
+            response := map[string]interface{}{"name": "version", "value": "1.5", "immutable": false}
+
+			return httpmock.NewJsonResponse(201, response);
+        })
 	})
 
 	Describe("Integration tests for shelflib", func() {
@@ -119,7 +129,11 @@ var _ = Describe("Shelflib", func() {
 
 		Context("UpdateMetadataProperty", func() {
 			It("should successfully update artifact's metadata property", func() {
-			})
+                testProp := &shelflib.MetadataProperty{"version", "1.5", false}
+                res, err := shelf.UpdateMetadataProperty(uriMap["artifact"], testProp)
+                Expect(err).ShouldNot(HaveOccurred())
+                Expect(res).To(Equal(testProp))
+            })
 		})
 
 		Context("GetMetadata", func() {

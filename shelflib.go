@@ -57,6 +57,7 @@ func (this *ShelfLib) GetArtifact(path string) (io.ReadCloser, error) {
 // It explicitly REMOVES metadata links.
 func (this *ShelfLib) ListArtifact(path string) (linkheader.Links, error) {
 	var links linkheader.Links
+
 	response, err := this.Request.DoRequest("HEAD", path, "artifact", "", nil)
 
 	if err != nil {
@@ -96,6 +97,7 @@ func (this *ShelfLib) CreateArtifact(path string, data []byte) error {
 // Search Shelf using SearchCriteria wrapper struct.
 func (this *ShelfLib) Search(path string, searchCriteria *SearchCriteria) (linkheader.Links, error) {
 	var links linkheader.Links
+
 	data, err := this.Request.MarshalRequestData(searchCriteria)
 
 	if err != nil {
@@ -114,6 +116,7 @@ func (this *ShelfLib) Search(path string, searchCriteria *SearchCriteria) (linkh
 // Retrieve metadata for an artifact.
 func (this *ShelfLib) GetMetadata(path string) (map[string]*MetadataProperty, error) {
 	var responseMeta map[string]*MetadataProperty
+
 	response, err := this.Request.DoRequest("GET", path, "meta", "", nil)
 
 	if err != nil {
@@ -126,6 +129,7 @@ func (this *ShelfLib) GetMetadata(path string) (map[string]*MetadataProperty, er
 // Retrieve metadata property for an artifact.
 func (this *ShelfLib) GetMetadataProperty(path string, propertyKey string) (*MetadataProperty, error) {
 	var responseMeta *MetadataProperty
+
 	response, err := this.Request.DoRequest("GET", path, "meta", propertyKey, nil)
 
 	if err != nil {
@@ -138,6 +142,7 @@ func (this *ShelfLib) GetMetadataProperty(path string, propertyKey string) (*Met
 // Bulk update of an artifacts metadata.
 func (this *ShelfLib) UpdateMetadata(path string, metadata map[string]*MetadataProperty) (map[string]*MetadataProperty, error) {
 	var responseMeta map[string]*MetadataProperty
+
 	data, err := this.Request.MarshalRequestData(metadata)
 
 	if err != nil {
@@ -156,6 +161,7 @@ func (this *ShelfLib) UpdateMetadata(path string, metadata map[string]*MetadataP
 // Update metadata property for an artifact.
 func (this *ShelfLib) UpdateMetadataProperty(path string, metadata *MetadataProperty) (*MetadataProperty, error) {
 	var responseMeta *MetadataProperty
+
 	data, err := this.Request.MarshalRequestData(metadata)
 
 	if err != nil {
@@ -174,6 +180,7 @@ func (this *ShelfLib) UpdateMetadataProperty(path string, metadata *MetadataProp
 // Create metadata property. Will not update existing.
 func (this *ShelfLib) CreateMetadataProperty(path string, metadata MetadataProperty) (*MetadataProperty, error) {
 	var responseMeta *MetadataProperty
+
 	data, err := this.Request.MarshalRequestData(metadata)
 
 	if err != nil {

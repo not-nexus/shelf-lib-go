@@ -96,7 +96,7 @@ func CreateMetadataProperty(name string, value string, immutable bool) *Metadata
 // Checks given response to see if it is an error response.
 // If it is it create a ShelfError.
 func CheckResponseStatus(response *http.Response) error {
-	if response.StatusCode < 399 {
+	if response.StatusCode < 399 && response.StatusCode > 199 {
 		return nil
 	}
 
