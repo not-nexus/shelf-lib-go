@@ -19,12 +19,12 @@ var SuffixMap = map[string]string{"meta": "_meta", "search": "_search", "artifac
 
 // Marshals given data to JSON and creates a buffer from it.
 func (this *Request) MarshalRequestData(data interface{}) (io.Reader, *ShelfError) {
-    var shelfErr *ShelfError
+	var shelfErr *ShelfError
 
 	jsonData, err := json.Marshal(data)
 
 	if err != nil {
-        shelfErr = CreateShelfErrorFromError(err)
+		shelfErr = CreateShelfErrorFromError(err)
 
 		return nil, shelfErr
 	}
@@ -34,12 +34,12 @@ func (this *Request) MarshalRequestData(data interface{}) (io.Reader, *ShelfErro
 
 // Performs request on Shelf.
 func (this *Request) DoRequest(verb string, path string, requestType string, property string, data io.Reader) (*http.Response, *ShelfError) {
-    var shelfErr *ShelfError
+	var shelfErr *ShelfError
 
 	requestURI, err := this.buildUrl(path, requestType, property)
 
 	if err != nil {
-        shelfErr = CreateShelfErrorFromError(err)
+		shelfErr = CreateShelfErrorFromError(err)
 
 		return nil, shelfErr
 	}
@@ -47,7 +47,7 @@ func (this *Request) DoRequest(verb string, path string, requestType string, pro
 	req, err := http.NewRequest(verb, requestURI, data)
 
 	if err != nil {
-        shelfErr = CreateShelfErrorFromError(err)
+		shelfErr = CreateShelfErrorFromError(err)
 
 		return nil, shelfErr
 	}
@@ -55,15 +55,15 @@ func (this *Request) DoRequest(verb string, path string, requestType string, pro
 	req.Header.Add("Authorization", this.ShelfToken)
 	client := &http.Client{}
 
-    resp, err := client.Do(req)
+	resp, err := client.Do(req)
 
-    if err != nil {
-        shelfErr = CreateShelfErrorFromError(err)
+	if err != nil {
+		shelfErr = CreateShelfErrorFromError(err)
 
 		return nil, shelfErr
 	}
 
-    return resp, shelfErr
+	return resp, shelfErr
 }
 
 // Builds Shelf URL.

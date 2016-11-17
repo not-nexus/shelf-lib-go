@@ -10,14 +10,14 @@ import (
 // Takes a response from Shelf and parses the links.
 func ParseLinks(response *http.Response) (linkheader.Links, *ShelfError) {
 	var (
-        links linkheader.Links
-        shelfErr *ShelfError
-    )
+		links    linkheader.Links
+		shelfErr *ShelfError
+	)
 
 	err := CheckResponseStatus(response)
 
 	if err != nil {
-        shelfErr = CreateShelfErrorFromError(err)
+		shelfErr = CreateShelfErrorFromError(err)
 
 		return links, shelfErr
 	}
@@ -29,12 +29,12 @@ func ParseLinks(response *http.Response) (linkheader.Links, *ShelfError) {
 
 // Parses a response with an expected JSON body.
 func ParseJsonResponse(response *http.Response, result *interface{}) *ShelfError {
-    var shelfErr *ShelfError
+	var shelfErr *ShelfError
 
 	err := CheckResponseStatus(response)
 
 	if err != nil {
-        shelfErr = CreateShelfErrorFromError(err)
+		shelfErr = CreateShelfErrorFromError(err)
 
 		return shelfErr
 	}
@@ -49,12 +49,12 @@ func ParseMetadataResponse(response *http.Response) (*MetadataProperty, *ShelfEr
 	var (
 		jsonResponse interface{}
 		result       *MetadataProperty
-        shelfErr *ShelfError
+		shelfErr     *ShelfError
 	)
 	err := ParseJsonResponse(response, &jsonResponse)
 
 	if err != nil {
-        shelfErr = CreateShelfErrorFromError(err)
+		shelfErr = CreateShelfErrorFromError(err)
 
 		return result, shelfErr
 	}
@@ -73,13 +73,13 @@ func ParseBulkMetadataResponse(response *http.Response) (map[string]*MetadataPro
 	var (
 		jsonResponse interface{}
 		result       map[string]*MetadataProperty
-        shelfErr *ShelfError
+		shelfErr     *ShelfError
 	)
 
 	err := ParseJsonResponse(response, &jsonResponse)
 
 	if err != nil {
-        shelfErr = CreateShelfErrorFromError(err)
+		shelfErr = CreateShelfErrorFromError(err)
 
 		return result, shelfErr
 	}
@@ -111,7 +111,7 @@ func CreateMetadataProperty(name string, value string, immutable bool) *Metadata
 // Checks given response to see if it is an error response.
 // If it is it create a ShelfError.
 func CheckResponseStatus(response *http.Response) *ShelfError {
-    var shelfErr *ShelfError
+	var shelfErr *ShelfError
 
 	if response.StatusCode < 399 && response.StatusCode > 199 {
 		return shelfErr
@@ -126,12 +126,12 @@ func CheckResponseStatus(response *http.Response) *ShelfError {
 	err := loadJsonBody(response.Body, &parsedBody)
 
 	if err != nil {
-        shelfErr = CreateShelfErrorFromError(err)
+		shelfErr = CreateShelfErrorFromError(err)
 	} else {
 		body := parsedBody.(map[string]interface{})
 		message = body["message"].(string)
 		code = body["code"].(string)
-	    shelfErr = CreateShelfError(message, code)
+		shelfErr = CreateShelfError(message, code)
 	}
 
 	return shelfErr

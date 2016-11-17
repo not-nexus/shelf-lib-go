@@ -57,9 +57,9 @@ func (this *ShelfLib) GetArtifact(path string) (*io.ReadCloser, *ShelfError) {
 // It explicitly REMOVES metadata links.
 func (this *ShelfLib) ListArtifact(path string) (*linkheader.Links, *ShelfError) {
 	var (
-        links linkheader.Links
-        err *ShelfError
-    )
+		links linkheader.Links
+		err   *ShelfError
+	)
 
 	response, err := this.Request.DoRequest("HEAD", path, "artifact", "", nil)
 
@@ -113,7 +113,7 @@ func (this *ShelfLib) Search(path string, searchCriteria *SearchCriteria) (*link
 		return &links, err
 	}
 
-    links, err = ParseLinks(response)
+	links, err = ParseLinks(response)
 
 	return &links, err
 }

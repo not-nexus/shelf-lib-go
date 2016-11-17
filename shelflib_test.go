@@ -2,9 +2,9 @@ package shelflib_test
 
 import (
 	"github.com/jarcoal/httpmock"
+	"github.com/not-nexus/shelf-lib-go"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/quantumew/shelflib"
 	"github.com/tomnomnom/linkheader"
 	"io"
 	"io/ioutil"
@@ -110,14 +110,13 @@ var _ = Describe("Shelflib", func() {
 			It("should successfully retrieve artifact", func() {
 				res, err := shelf.GetArtifact(uriMap["artifact"])
 				Expect(err).ShouldNot(HaveOccurred())
-				respContents, _ := ioutil.ReadAll(res)
+				respContents, _ := ioutil.ReadAll(*res)
 				Expect(respContents).To(Equal([]byte("Simple Text File")))
 			})
 
 			It("should fail with invalid token", func() {
 				shelf.Request.ShelfToken = "INVALID"
-				_, err := shelf.GetArtifact(uriMap["artifact"])
-				shelfErr := err.(*shelflib.ShelfError)
+				_, shelfErr := shelf.GetArtifact(uriMap["artifact"])
 				Expect(shelfErr.Message).To(Equal("Permission denied"))
 				Expect(shelfErr.Code).To(Equal("permission_denied"))
 			})
@@ -147,7 +146,7 @@ var _ = Describe("Shelflib", func() {
 				expectedLinks := linkheader.Parse(testLink)
 				links, err := shelf.ListArtifact(uriMap["artifact"])
 				Expect(err).ShouldNot(HaveOccurred())
-				Expect(links).To(Equal(expectedLinks))
+				Expect(*links).To(Equal(expectedLinks))
 			})
 		})
 
@@ -194,7 +193,7 @@ var _ = Describe("Shelflib", func() {
 				searchCriteria.Search = []string{"artifactName=test-artifact"}
 				res, err := shelf.Search(uriMap["artifact"], searchCriteria)
 				Expect(err).ShouldNot(HaveOccurred())
-				Expect(res).To(Equal(expectedLinks))
+				Expect(*res).To(Equal(expectedLinks))
 			})
 		})
 	})
