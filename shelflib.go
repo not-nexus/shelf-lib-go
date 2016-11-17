@@ -178,7 +178,7 @@ func (this *ShelfLib) UpdateMetadataProperty(path string, metadata *MetadataProp
 }
 
 // Create metadata property. Will not update existing.
-func (this *ShelfLib) CreateMetadataProperty(path string, metadata MetadataProperty) (*MetadataProperty, error) {
+func (this *ShelfLib) CreateMetadataProperty(path string, metadata *MetadataProperty) (*MetadataProperty, error) {
 	var responseMeta *MetadataProperty
 
 	data, err := this.Request.MarshalRequestData(metadata)
