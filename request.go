@@ -18,34 +18,52 @@ type Request struct {
 var SuffixMap = map[string]string{"meta": "_meta", "search": "_search", "artifact": ""}
 
 // Marshals given data to JSON and creates a buffer from it.
-func (this *Request) MarshalRequestData(data interface{}) (io.Reader, error) {
+func (this *Request) MarshalRequestData(data interface{}) (io.Reader, *ShelfError) {
+    var shelfErr *ShelfError
+
 	jsonData, err := json.Marshal(data)
 
 	if err != nil {
-		return nil, err
+        shelfErr = CreateShelfErrorFromError(err)
+
+		return nil, shelfErr
 	}
 
-	return bytes.NewBuffer(jsonData), nil
+	return bytes.NewBuffer(jsonData), shelfErr
 }
 
 // Performs request on Shelf.
-func (this *Request) DoRequest(verb string, path string, requestType string, property string, data io.Reader) (*http.Response, error) {
+func (this *Request) DoRequest(verb string, path string, requestType string, property string, data io.Reader) (*http.Response, *ShelfError) {
+    var shelfErr *ShelfError
+
 	requestURI, err := this.buildUrl(path, requestType, property)
 
 	if err != nil {
-		return nil, err
+        shelfErr = CreateShelfErrorFromError(err)
+
+		return nil, shelfErr
 	}
 
 	req, err := http.NewRequest(verb, requestURI, data)
 
 	if err != nil {
-		return nil, err
+        shelfErr = CreateShelfErrorFromError(err)
+
+		return nil, shelfErr
 	}
 
 	req.Header.Add("Authorization", this.ShelfToken)
 	client := &http.Client{}
 
-	return client.Do(req)
+    resp, err := client.Do(req)
+
+    if err != nil {
+        shelfErr = CreateShelfErrorFromError(err)
+
+		return nil, shelfErr
+	}
+
+    return resp, shelfErr
 }
 
 // Builds Shelf URL.

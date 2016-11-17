@@ -8,43 +8,55 @@ import (
 )
 
 // Takes a response from Shelf and parses the links.
-func ParseLinks(response *http.Response) (linkheader.Links, error) {
-	var links linkheader.Links
+func ParseLinks(response *http.Response) (linkheader.Links, *ShelfError) {
+	var (
+        links linkheader.Links
+        shelfErr *ShelfError
+    )
 
 	err := CheckResponseStatus(response)
 
 	if err != nil {
-		return links, err
+        shelfErr = CreateShelfErrorFromError(err)
+
+		return links, shelfErr
 	}
 
 	links = linkheader.ParseMultiple(response.Header["Link"])
 
-	return links, nil
+	return links, shelfErr
 }
 
 // Parses a response with an expected JSON body.
-func ParseJsonResponse(response *http.Response, result *interface{}) error {
+func ParseJsonResponse(response *http.Response, result *interface{}) *ShelfError {
+    var shelfErr *ShelfError
+
 	err := CheckResponseStatus(response)
 
 	if err != nil {
-		return err
+        shelfErr = CreateShelfErrorFromError(err)
+
+		return shelfErr
 	}
 
 	loadJsonBody(response.Body, result)
 
-	return nil
+	return shelfErr
 }
 
 // Parses metadata property response.
-func ParseMetadataResponse(response *http.Response) (*MetadataProperty, error) {
+func ParseMetadataResponse(response *http.Response) (*MetadataProperty, *ShelfError) {
 	var (
 		jsonResponse interface{}
 		result       *MetadataProperty
+        shelfErr *ShelfError
 	)
 	err := ParseJsonResponse(response, &jsonResponse)
 
 	if err != nil {
-		return result, err
+        shelfErr = CreateShelfErrorFromError(err)
+
+		return result, shelfErr
 	}
 
 	prop := jsonResponse.(map[string]interface{})
@@ -53,20 +65,23 @@ func ParseMetadataResponse(response *http.Response) (*MetadataProperty, error) {
 	immutable := prop["immutable"].(bool)
 	result = CreateMetadataProperty(name, value, immutable)
 
-	return result, nil
+	return result, shelfErr
 }
 
 // Parses bulk metadata response.
-func ParseBulkMetadataResponse(response *http.Response) (map[string]*MetadataProperty, error) {
+func ParseBulkMetadataResponse(response *http.Response) (map[string]*MetadataProperty, *ShelfError) {
 	var (
 		jsonResponse interface{}
 		result       map[string]*MetadataProperty
+        shelfErr *ShelfError
 	)
 
 	err := ParseJsonResponse(response, &jsonResponse)
 
 	if err != nil {
-		return result, err
+        shelfErr = CreateShelfErrorFromError(err)
+
+		return result, shelfErr
 	}
 
 	propMap := jsonResponse.(map[string]interface{})
@@ -79,7 +94,7 @@ func ParseBulkMetadataResponse(response *http.Response) (map[string]*MetadataPro
 		result[key] = CreateMetadataProperty(key, value, immutable)
 	}
 
-	return result, nil
+	return result, shelfErr
 }
 
 // Creates a new MetadataProperty.
@@ -95,9 +110,11 @@ func CreateMetadataProperty(name string, value string, immutable bool) *Metadata
 
 // Checks given response to see if it is an error response.
 // If it is it create a ShelfError.
-func CheckResponseStatus(response *http.Response) error {
+func CheckResponseStatus(response *http.Response) *ShelfError {
+    var shelfErr *ShelfError
+
 	if response.StatusCode < 399 && response.StatusCode > 199 {
-		return nil
+		return shelfErr
 	}
 
 	var (
@@ -109,14 +126,13 @@ func CheckResponseStatus(response *http.Response) error {
 	err := loadJsonBody(response.Body, &parsedBody)
 
 	if err != nil {
-		return err
+        shelfErr = CreateShelfErrorFromError(err)
 	} else {
 		body := parsedBody.(map[string]interface{})
 		message = body["message"].(string)
 		code = body["code"].(string)
+	    shelfErr = CreateShelfError(message, code)
 	}
-
-	shelfErr := NewShelfError(message, code)
 
 	return shelfErr
 }
