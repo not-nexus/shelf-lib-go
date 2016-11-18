@@ -11,13 +11,15 @@ import (
 	"log"
 	"net/http"
 	"path"
+	"strings"
 )
+
+var shelf *shelflib.ShelfLib
 
 var validToken = "VALIDTOKEN"
 var host = "https://api.shelf.cwscloud.net/"
 var logOutput io.Writer
 var logger = log.New(logOutput, "", 0)
-var shelf = shelflib.New(validToken, logger)
 var testBucket = "test"
 var testPath = "test-artifact"
 var testLink = `</test/artifact/thing>; rel="self"; title="artifact"`
@@ -41,8 +43,14 @@ var uriMap = map[string]string{
 	"baseSearch": buildUri(testBucket, "", "search", ""),
 }
 
+// Asserts standard successful requests for functional tests.
+func assertRequest(request *http.Request) {
+	Expect(request.Header["Authorization"][0]).To(Equal(validToken))
+}
+
 var _ = Describe("Shelflib", func() {
 	BeforeEach(func() {
+		shelf = shelflib.New(validToken, logger)
 		propResponse := map[string]interface{}{"name": "version", "value": "1.5", "immutable": false}
 		permissionsError := map[string]string{"message": "Permission denied", "code": "permission_denied"}
 		// Get artifact mocked route
@@ -50,6 +58,8 @@ var _ = Describe("Shelflib", func() {
 			token := request.Header["Authorization"][0]
 
 			if token == validToken {
+				assertRequest(request)
+
 				return httpmock.NewStringResponse(200, "Simple Text File"), nil
 			} else {
 				return httpmock.NewJsonResponse(403, permissionsError)
@@ -60,38 +70,50 @@ var _ = Describe("Shelflib", func() {
 		httpmock.RegisterResponder("HEAD", uriMap["artifact"], func(request *http.Request) (*http.Response, error) {
 			response := httpmock.NewStringResponse(204, "")
 			response.Header["Link"] = []string{testLink, metadataLink}
+			assertRequest(request)
 
 			return response, nil
 		})
 
 		// Upload artifact.
 		httpmock.RegisterResponder("POST", uriMap["artifact"], func(request *http.Request) (*http.Response, error) {
+			assertRequest(request)
+
 			return httpmock.NewStringResponse(201, ""), nil
 		})
 
 		// Bulk update of metadata.
 		httpmock.RegisterResponder("PUT", uriMap["meta"], func(request *http.Request) (*http.Response, error) {
+			assertRequest(request)
+
 			return httpmock.NewJsonResponse(201, testMetadata)
 		})
 
 		// Update metadata property.
 		httpmock.RegisterResponder("PUT", uriMap["meta"]+"/version", func(request *http.Request) (*http.Response, error) {
+			assertRequest(request)
+
 			return httpmock.NewJsonResponse(201, propResponse)
 		})
 
 		// Get metadata.
 		httpmock.RegisterResponder("GET", uriMap["meta"], func(request *http.Request) (*http.Response, error) {
+			assertRequest(request)
+
 			return httpmock.NewJsonResponse(200, testMetadata)
 		})
 
 		// Get metadata property.
 		httpmock.RegisterResponder("GET", uriMap["meta"]+"/version", func(request *http.Request) (*http.Response, error) {
+			assertRequest(request)
+
 			return httpmock.NewJsonResponse(200, propResponse)
 		})
 
 		// Create metadata property.
 		httpmock.RegisterResponder("POST", uriMap["meta"]+"/stuff", func(request *http.Request) (*http.Response, error) {
 			response := map[string]interface{}{"name": "stuff", "value": "monoamine-oxidase-inhibitor", "immutable": true}
+			assertRequest(request)
 
 			return httpmock.NewJsonResponse(200, response)
 		})
@@ -100,36 +122,34 @@ var _ = Describe("Shelflib", func() {
 		httpmock.RegisterResponder("POST", uriMap["search"], func(request *http.Request) (*http.Response, error) {
 			response := httpmock.NewStringResponse(204, "")
 			response.Header["Link"] = []string{testLink}
+			assertRequest(request)
 
 			return response, nil
 		})
 	})
 
 	Describe("Integration tests for shelflib", func() {
-		Context("GetArtifact", func() {
+		Context("DownloadArtifact", func() {
 			It("should successfully retrieve artifact", func() {
-				res, err := shelf.GetArtifact(uriMap["artifact"])
+				res, err := shelf.DownloadArtifact(uriMap["artifact"])
 				Expect(err).ShouldNot(HaveOccurred())
 				respContents, _ := ioutil.ReadAll(*res)
 				Expect(respContents).To(Equal([]byte("Simple Text File")))
 			})
-
 			It("should fail with invalid token", func() {
 				shelf.Request.ShelfToken = "INVALID"
-				_, shelfErr := shelf.GetArtifact(uriMap["artifact"])
+				_, shelfErr := shelf.DownloadArtifact(uriMap["artifact"])
 				Expect(shelfErr.Message).To(Equal("Permission denied"))
 				Expect(shelfErr.Code).To(Equal("permission_denied"))
 			})
 		})
-
-		Context("CreateArtifact", func() {
+		Context("UploadArtifact", func() {
 			It("should successfully create artifact", func() {
-				fileContents := []byte("Simple Text File")
-				err := shelf.CreateArtifact(uriMap["artifact"], fileContents)
+				fileContents := "Simple Text File"
+				err := shelf.UploadArtifact(uriMap["artifact"], strings.NewReader(fileContents))
 				Expect(err).ShouldNot(HaveOccurred())
 			})
 		})
-
 		Context("UpdateMetadata", func() {
 			It("should successfully update artifact's metadata", func() {
 				version := &shelflib.MetadataProperty{"version", "1.5", false}
@@ -140,7 +160,6 @@ var _ = Describe("Shelflib", func() {
 				Expect(res).To(Equal(metadata))
 			})
 		})
-
 		Context("ListArtifact", func() {
 			It("Should successfuly retrieve artifact link.", func() {
 				expectedLinks := linkheader.Parse(testLink)
@@ -149,7 +168,6 @@ var _ = Describe("Shelflib", func() {
 				Expect(*links).To(Equal(expectedLinks))
 			})
 		})
-
 		Context("UpdateMetadataProperty", func() {
 			It("should successfully update artifact's metadata property", func() {
 				testProp := &shelflib.MetadataProperty{"version", "1.5", false}
@@ -158,7 +176,6 @@ var _ = Describe("Shelflib", func() {
 				Expect(res).To(Equal(testProp))
 			})
 		})
-
 		Context("GetMetadata", func() {
 			It("should successfully retrieve artifact's metadata", func() {
 				version := &shelflib.MetadataProperty{"version", "1.5", false}
@@ -169,7 +186,6 @@ var _ = Describe("Shelflib", func() {
 				Expect(res).To(Equal(metadata))
 			})
 		})
-
 		Context("GetMetadataProperty", func() {
 			It("should successfully retrieve artifact's metadata property", func() {
 				res, err := shelf.GetMetadataProperty(uriMap["artifact"], "version")

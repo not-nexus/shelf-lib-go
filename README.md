@@ -2,7 +2,7 @@ Shelf Lib
 =========
 
 [![Build Status](https://travis-ci.org/not-nexus/shelf-lib-go.svg?branch=master)](https://travis-ci.org/not-nexus/shelf-lib-go)
-[![codecov.io](http://codecov.io/github/not-nexus/shelf-lib-go/coverage.svg?branch=master)](http://codecov.io/github/not-nexus/shelf-lib-go?branch=master)
+[![codecov.io](http://codecov.io/github/not-nexus/shelf-lib-go/coverage.svg)](http://codecov.io/github/not-nexus/shelf-lib-go)
 
 Library for interfacing with [shelf](https://github.com/not-nexus/shelf).
 There is an associated CLI for this library here [not-nexus/shelfcli](https://github.com/not-nexus/shelfcli).

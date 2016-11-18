@@ -1,10 +1,10 @@
 package shelflib
 
 import (
-	"bytes"
 	"github.com/tomnomnom/linkheader"
 	"io"
 	"log"
+	"os"
 )
 
 // Wrapper for Shelf search criteria.
@@ -35,7 +35,7 @@ func New(shelfToken string, logger *log.Logger) *ShelfLib {
 }
 
 // Download artifact from Shelf.
-func (this *ShelfLib) GetArtifact(path string) (*io.ReadCloser, *ShelfError) {
+func (this *ShelfLib) DownloadArtifact(path string) (*io.ReadCloser, *ShelfError) {
 	response, err := this.Request.DoRequest("GET", path, "artifact", "", nil)
 
 	if err != nil {
@@ -51,6 +51,34 @@ func (this *ShelfLib) GetArtifact(path string) (*io.ReadCloser, *ShelfError) {
 	}
 
 	return &response.Body, err
+}
+
+// Downloads artifact to a file.
+func (this *ShelfLib) DownloadArtifactToFile(path string, filePath string) *ShelfError {
+	resp, shelfErr := this.DownloadArtifact(path)
+
+	if shelfErr != nil {
+		return shelfErr
+	}
+
+	outFile, err := os.Create(filePath)
+
+	if err != nil {
+		shelfErr = CreateShelfErrorFromError(err)
+
+		return shelfErr
+	}
+
+	defer outFile.Close()
+	_, err = io.Copy(outFile, *resp)
+
+	if err != nil {
+		shelfErr = CreateShelfErrorFromError(err)
+
+		return shelfErr
+	}
+
+	return shelfErr
 }
 
 // Perform a HEAD request on an artifact endpoint.
@@ -87,14 +115,27 @@ func (this *ShelfLib) ListArtifact(path string) (*linkheader.Links, *ShelfError)
 }
 
 // Upload an artifact from Shelf.
-func (this *ShelfLib) CreateArtifact(path string, data []byte) *ShelfError {
-	response, err := this.Request.DoRequest("POST", path, "artifact", "", bytes.NewBuffer(data))
+func (this *ShelfLib) UploadArtifact(path string, reader io.Reader) *ShelfError {
+	response, err := this.Request.Upload(path, reader)
 
 	if err != nil {
 		return err
 	}
 
 	return CheckResponseStatus(response)
+}
+
+// Upload an artifact from a file path.
+func (this *ShelfLib) UploadArtifactFromFile(path string, filePath string) *ShelfError {
+	reader, err := os.Open(filePath)
+
+	if err != nil {
+		shelfErr := CreateShelfErrorFromError(err)
+
+		return shelfErr
+	}
+
+	return this.UploadArtifact(path, reader)
 }
 
 // Search Shelf using SearchCriteria wrapper struct.

@@ -7,6 +7,16 @@ import (
 	"net/http"
 )
 
+var failureResponseMap map[int]string = map[int]string{
+	400: "bad_request",
+	401: "unauthorized",
+	403: "forbidden",
+	404: "resource_not_found",
+	500: "internal_server_error",
+	503: "service_unavailable",
+	504: "gateway_timeout",
+}
+
 // Takes a response from Shelf and parses the links.
 func ParseLinks(response *http.Response) (linkheader.Links, *ShelfError) {
 	var (
@@ -111,22 +121,25 @@ func CreateMetadataProperty(name string, value string, immutable bool) *Metadata
 // Checks given response to see if it is an error response.
 // If it is it create a ShelfError.
 func CheckResponseStatus(response *http.Response) *ShelfError {
-	var shelfErr *ShelfError
+	var (
+		code       string
+		message    string
+		parsedBody interface{}
+		shelfErr   *ShelfError
+	)
 
 	if response.StatusCode < 399 && response.StatusCode > 199 {
 		return shelfErr
 	}
 
-	var (
-		code       string
-		message    string
-		parsedBody interface{}
-	)
-
 	err := loadJsonBody(response.Body, &parsedBody)
 
 	if err != nil {
-		shelfErr = CreateShelfErrorFromError(err)
+		if code, ok := failureResponseMap[response.StatusCode]; ok {
+			shelfErr = CreateShelfError("Failed Shelf response.", code)
+		} else {
+			shelfErr = CreateShelfError("Failed Shelf response.", "unknown_error")
+		}
 	} else {
 		body := parsedBody.(map[string]interface{})
 		message = body["message"].(string)

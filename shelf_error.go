@@ -16,5 +16,5 @@ func CreateShelfError(message string, code string) *ShelfError {
 }
 
 func (this *ShelfError) Error() string {
-	return this.Message
+	return "Message: " + this.Message + " Code: " + this.Code
 }
