@@ -127,7 +127,7 @@ func (this *ShelfLib) UploadArtifact(path string, reader io.Reader) *ShelfError 
 
 // Upload an artifact from a file path.
 func (this *ShelfLib) UploadArtifactFromFile(path string, filePath string) *ShelfError {
-	reader, err := os.Open(filePath)
+	file, err := os.Open(filePath)
 
 	if err != nil {
 		shelfErr := CreateShelfErrorFromError(err)
@@ -135,7 +135,9 @@ func (this *ShelfLib) UploadArtifactFromFile(path string, filePath string) *Shel
 		return shelfErr
 	}
 
-	return this.UploadArtifact(path, reader)
+	defer file.Close()
+
+	return this.UploadArtifact(path, file)
 }
 
 // Search Shelf using SearchCriteria wrapper struct.

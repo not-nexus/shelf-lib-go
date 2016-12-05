@@ -21,14 +21,11 @@ var failureResponseMap map[int]string = map[int]string{
 func ParseLinks(response *http.Response) (linkheader.Links, *ShelfError) {
 	var (
 		links    linkheader.Links
-		shelfErr *ShelfError
 	)
 
-	err := CheckResponseStatus(response)
+	shelfErr := CheckResponseStatus(response)
 
-	if err != nil {
-		shelfErr = CreateShelfErrorFromError(err)
-
+	if shelfErr != nil {
 		return links, shelfErr
 	}
 

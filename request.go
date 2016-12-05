@@ -49,8 +49,8 @@ func (this *Request) Upload(path string, data io.Reader) (*http.Response, *Shelf
 
 	_, filePath := filepath.Split(path)
 	body := new(bytes.Buffer)
-	writer := multipart.NewWriter(body)
-	part, err := writer.CreateFormFile("file", filePath)
+	multiWriter := multipart.NewWriter(body)
+	part, err := multiWriter.CreateFormFile("file", filePath)
 
 	if err != nil {
 		shelfErr = CreateShelfErrorFromError(err)
@@ -73,6 +73,8 @@ func (this *Request) Upload(path string, data io.Reader) (*http.Response, *Shelf
 
 		return nil, shelfErr
 	}
+
+    req.Header.Add("Content-Type", multiWriter.FormDataContentType())
 
 	return this.PeformRequest(req)
 }
